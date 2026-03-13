@@ -32,3 +32,19 @@ def rarityColor(rarity):
         }
         print(f"Color seleccionado: {ranges[rarity]}")
         return ranges[rarity]
+    
+def card_to_embed(card) -> discord.Embed:
+    embed = discord.Embed(
+        title=card.title,
+        description=card.description,
+        color=rarityColor(card.rarity),
+        url=card.url
+    )
+    embed.add_field(name="Rareza", value=card.rarity)
+    embed.add_field(name="Categoria", value=card.category)
+    embed.add_field(name="ATK", value=card.attack)
+    embed.add_field(name="DEF", value=card.defense)
+    embed.add_field(name="HP", value=card.hp)
+    if card.image:
+        embed.set_image(url=card.image)
+    return embed

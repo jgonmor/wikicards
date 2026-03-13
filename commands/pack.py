@@ -1,6 +1,7 @@
 from discord.ext import commands
 import discord
-from systems.card_dc_generator import gen_dc_card
+from systems.card_dc_generator import card_to_embed
+from systems.card_generator import generate_pack
 from database.models.player_model import PlayerModel
 
 class Pack(commands.Cog):
@@ -10,25 +11,11 @@ class Pack(commands.Cog):
     @commands.command(name="pack", help="Genera un sobre con 5 cartas")
     async def pack(self, ctx):
         print(f'Comando !pack invocado por {ctx.author}...')
-        player = PlayerModel.get_or_create(
-            discord_id=str(ctx.author.id),
-            username=ctx.author.name
-        )
-        for i in range(5):
-            card, embed = gen_dc_card()
+        player = PlayerModel.get_or_create(str(ctx.author.id), ctx.author.name)
+        cards = generate_pack(5)
+        for card in cards:
             player.assign_card(card)
-            await ctx.send(embed=embed)
-        
-    def rarityColor(self, rarity):
-        ranges = {
-            "Común": discord.Color.green(),
-            "Raro": discord.Color.blue(),
-            "Épico": discord.Color.pink(),
-            "Legendario": discord.Color.purple(),
-            "Mítico": discord.Color.gold()
-        }
-        print(f"Color seleccionado: {ranges[rarity]}")
-        return ranges[rarity]
+            await ctx.send(embed=card_to_embed(card))
         
 async def setup(bot):
     await bot.add_cog(Pack(bot))

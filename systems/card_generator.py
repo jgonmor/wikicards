@@ -63,16 +63,21 @@ def generate_stats(rarity):
         'defense': random.randint(low, high),
         'hp': random.randint(low, high)
     }
-   
-def assign_type(description: str, title : str = "") -> str:
+ 
+def assign_type_keywords(description: str) -> str:
     if not description:
         return "General"
-    text = f"{description}".lower()
-    for type, keywords in TIPOS_ES.items():
-        if any(word in text for word in keywords):
-            return type
+    text = description.lower()
+    for tipo, keywords in TIPOS_ES.items():
+        if keywords and any(word in text for word in keywords):
+            return tipo
+    return "General"
+  
+def assign_type(description: str, title: str = "") -> str:
+    category = assign_type_keywords(description)
+    if category != "General":
+        return category
     try:
-        print("preguntando a la IA")
         return _classifier.classify(title, description or "", list(TIPOS_ES.keys()))
     except Exception as e:
         print(f"Error en clasificación IA: {e}")
@@ -97,14 +102,44 @@ def generate_card():
     }
     
     return CardModel.get_or_create_card(article['id'], **dict)
+
+def generate_pack(size: int = 5) -> list[CardModel]:
+    articles = [get_random_article() for _ in range(size)]
+    categories = list(TIPOS_ES.keys())
     
-    return CardModel(
-        wikipedia_id=article["id"],
-        title= article["title"],
-        description= article["description"],
-        image= article["image"],
-        rarity= card_rarity,
-        url= article["url"],
-        category= category,
-        **stats
-    )
+    # Clasificar primero con keywords
+    results = {}
+    to_classify = []
+
+    for i, article in enumerate(articles):
+        category = assign_type_keywords(article["category"])
+        if category != "General":
+            results[i] = category
+            print(f"✅ '{article['title']}' clasificado por keywords: {category}")
+        else:
+            to_classify.append((i, article))
+            print(f"🤖 '{article['title']}' sin keywords, se preguntará a la IA")
+
+    # Solo llamar a la IA con los que no se pudieron clasificar
+    if to_classify:
+        ai_input = [{"title": a["title"], "description": a["category"] or ""} for _, a in to_classify]
+        ai_categories = _classifier.classify_batch(ai_input, categories)
+        for (i, _), category in zip(to_classify, ai_categories):
+            results[i] = category
+
+    cards = []
+    for i, article in enumerate(articles):
+        card_rarity = rarity(article["title"])
+        stats = generate_stats(card_rarity)
+        card = CardModel.get_or_create_card(article["id"],
+            title=article["title"],
+            description=article["description"],
+            image=article["image"],
+            rarity=card_rarity,
+            url=article["url"],
+            category=results[i],
+            **stats
+        )
+        cards.append(card)
+
+    return cards
