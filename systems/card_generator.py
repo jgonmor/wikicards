@@ -1,6 +1,9 @@
 import random
 from .wiki_api import get_random_article, get_wikipedia_categories
 from database.models.card_model import CardModel
+from .ai_classifier import DeepseekClassifier
+
+_classifier = DeepseekClassifier()
 
 TIPOS_ES = {
     "Científico": ["científico", "físico", "químico", "biólogo", "matemático", "ingeniero", "astrónomo"],
@@ -61,19 +64,25 @@ def generate_stats(rarity):
         'hp': random.randint(low, high)
     }
    
-def assign_type(extract):
-    text = f"{extract}".lower()
-    for tipo, keywords in TIPOS_ES.items():
+def assign_type(description: str, title : str = "") -> str:
+    if not description:
+        return "General"
+    text = f"{description}".lower()
+    for type, keywords in TIPOS_ES.items():
         if any(word in text for word in keywords):
-            return tipo
-    return "General"
+            return type
+    try:
+        print("preguntando a la IA")
+        return _classifier.classify(title, description or "", list(TIPOS_ES.keys()))
+    except Exception as e:
+        print(f"Error en clasificación IA: {e}")
+        return "General"
    
 def generate_card():
     article = get_random_article()
-    categories = get_wikipedia_categories(article["title"])
     card_rarity = rarity(article["title"])
     stats = generate_stats(card_rarity)
-    category = assign_type(categories)
+    category = assign_type(article["category"])
     
     print(f'generando carta con rareza {card_rarity}, {stats}')
     
