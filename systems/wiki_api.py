@@ -10,7 +10,7 @@ def get_random_article():
     }
 
     try:
-        r = requests.get(WIKIPEDIA_REST_URL, headers=headers, timeout=5)
+        r = requests.get(WIKIPEDIA_REST_URL, headers=headers)
         r.raise_for_status()
         data = r.json()
     except requests.RequestException as e:

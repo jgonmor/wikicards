@@ -14,12 +14,12 @@ c.executescript(sql_path.read_text())
 conn.commit()
 
 def get_card(wikipedia_id):
-    print(c)
     c.execute("SELECT * FROM cards WHERE wikipedia_id=?", (wikipedia_id,))
-    card = c.fetchone()
-    print(f"Existe?: {card}")
-    if card:
-        return card
+    row = c.fetchone()
+    if row:
+        keys = ["id", "wikipedia_id", "title", "description", "image",
+                "rarity", "attack", "defense", "hp", "category", "url"]
+        return dict(zip(keys, row))
     return None
     
 def insert_card(wikipedia_id, title, description, image, rarity, attack, defense, hp, category, url):
@@ -31,44 +31,34 @@ def insert_card(wikipedia_id, title, description, image, rarity, attack, defense
     conn.commit()
     print("carta insertada")
 
+def get_player(discord_id):
+    c.execute("SELECT * FROM players WHERE discord_id=?", (discord_id,))
+    row = c.fetchone()
+    if row:
+        return {"id": row[0], "discord_id": row[1], "username": row[2]}
+    return None
 
-# Obtener o crear jugador
-def obtener_o_crear_jugador(discord_id, nombre):
-    c.execute("SELECT * FROM jugadores WHERE discord_id=?", (discord_id,))
-    jugador = c.fetchone()
-    if jugador:
-        return jugador
+def insert_player(discord_id, username):
     c.execute(
-        "INSERT INTO jugadores (discord_id, nombre) VALUES (?, ?)",
-        (discord_id, nombre)
+        "INSERT OR IGNORE INTO players (discord_id, username) VALUES (?, ?)",
+        (discord_id, username)
     )
     conn.commit()
-    c.execute("SELECT * FROM jugadores WHERE discord_id=?", (discord_id,))
-    return c.fetchone()
 
-
-# Asignar card a jugador
-def asignar_card_a_jugador(discord_id, nombre, card):
-    jugador = obtener_o_crear_jugador(discord_id, nombre)
-    card_id = card[0]  # id de la card en la DB
-    jugador_id = jugador[0]
-
-    # Ver si ya tiene la card
+def assign_card_to_player(player_id, card_id):
     c.execute(
-        "SELECT cantidad FROM jugador_cards WHERE jugador_id=? AND card_id=?",
-        (jugador_id, card_id)
+        "SELECT quantity FROM player_card WHERE player_id=? AND card_id=?",
+        (player_id, card_id)
     )
     row = c.fetchone()
     if row:
-        # Si ya tiene la card, aumentamos la cantidad
         c.execute(
-            "UPDATE jugador_cards SET cantidad=cantidad+1 WHERE jugador_id=? AND card_id=?",
-            (jugador_id, card_id)
+            "UPDATE player_card SET quantity=quantity+1 WHERE player_id=? AND card_id=?",
+            (player_id, card_id)
         )
     else:
-        # Si no la tiene, insertamos
         c.execute(
-            "INSERT INTO jugador_cards (jugador_id, card_id) VALUES (?, ?)",
-            (jugador_id, card_id)
+            "INSERT INTO player_card (player_id, card_id) VALUES (?, ?)",
+            (player_id, card_id)
         )
     conn.commit()

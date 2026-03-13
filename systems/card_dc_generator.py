@@ -20,7 +20,7 @@ def gen_dc_card():
     if card.image:
         embed.set_image(url=card.image)
         
-    return embed
+    return card, embed
         
 def rarityColor(rarity):
         ranges = {
