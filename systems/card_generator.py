@@ -1,5 +1,5 @@
 import random
-from .wiki_api import get_random_article, get_wikipedia_categories
+from .wiki_api import get_random_article, get_article_by_title
 from database.models.card_model import CardModel
 from .ai_classifier import DeepseekClassifier
 
@@ -143,3 +143,29 @@ def generate_pack(size: int = 5) -> list[CardModel]:
         cards.append(card)
 
     return cards
+
+def generate_card_by_title(title: str) -> CardModel | None:
+    card = CardModel.get_by_title(title)
+    if card:
+        print(f"✅ '{title}' encontrada en la DB")
+        return card
+
+    # 2. Si no está, buscar en Wikipedia
+    print(f"🔍 '{title}' no está en la DB, buscando en Wikipedia...")
+    article = get_article_by_title(title)
+    if not article:
+        return None
+
+    card_rarity = rarity(article["title"])
+    stats = generate_stats(card_rarity)
+    category = assign_type(article["category"], article["title"])
+
+    return CardModel.get_or_create_card(article["id"],
+        title=article["title"],
+        description=article["description"],
+        image=article["image"],
+        rarity=card_rarity,
+        url=article["url"],
+        category=category,
+        **stats
+    )

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-from ..tcg_api import insert_card, get_card
+from ..tcg_api import insert_card, get_card, get_card_by_title
 
 @dataclass
 class CardModel:
@@ -57,3 +57,10 @@ class CardModel:
             print(f"No se pudo recuperar la carta insertada")
             raise ValueError(f"No se pudo recuperar la carta después de insertarla: {wikipedia_id}")
         return cls._from_dict(card_data)
+    
+    @staticmethod
+    def get_by_title(title: str) -> "CardModel | None":
+        card_data = get_card_by_title(title)
+        if card_data:
+            return CardModel._from_dict(card_data)
+        return None

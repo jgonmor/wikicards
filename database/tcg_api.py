@@ -21,6 +21,15 @@ def get_card(wikipedia_id):
                 "rarity", "attack", "defense", "hp", "category", "url"]
         return dict(zip(keys, row))
     return None
+
+def get_card_by_title(title: str) -> dict | None:
+    c.execute("SELECT * FROM cards WHERE LOWER(title)=LOWER(?)", (title,))
+    row = c.fetchone()
+    if row:
+        keys = ["id", "wikipedia_id", "title", "description", "image",
+                "rarity", "attack", "defense", "hp", "category", "url"]
+        return dict(zip(keys, row))
+    return None
     
 def insert_card(wikipedia_id, title, description, image, rarity, attack, defense, hp, category, url):
     print("insertando carta")
