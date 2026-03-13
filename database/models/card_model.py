@@ -15,6 +15,7 @@ class CardModel:
     category: str
     url: str
     id: Optional[int] = field(default=None)
+    quantity: Optional[int] = field(default=None)
     
     def save(self):
         print("Guardando carta")

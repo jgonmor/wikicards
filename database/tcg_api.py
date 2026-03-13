@@ -62,3 +62,15 @@ def assign_card_to_player(player_id, card_id):
             (player_id, card_id)
         )
     conn.commit()
+    
+def get_player_cards(player_id: int) -> list[dict]:
+    c.execute("""
+        SELECT c.*, pc.quantity 
+        FROM cards c
+        JOIN player_card pc ON c.id = pc.card_id
+        WHERE pc.player_id = ?
+    """, (player_id,))
+    rows = c.fetchall()
+    keys = ["id", "wikipedia_id", "title", "description", "image",
+            "rarity", "attack", "defense", "hp", "category", "url", "quantity"]
+    return [dict(zip(keys, row)) for row in rows]

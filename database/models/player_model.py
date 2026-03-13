@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from ..tcg_api import get_player, insert_player, assign_card_to_player
+from ..tcg_api import get_player, insert_player, assign_card_to_player, get_player_cards
+from database.models.card_model import CardModel
 
 @dataclass
 class PlayerModel:
@@ -21,3 +22,7 @@ class PlayerModel:
         if data is None:
             raise ValueError(f"No se puede obtener el nuevo player")
         return cls(**data)
+    
+    def get_collection(self) -> list[CardModel]:
+        cards_data = get_player_cards(self.id)
+        return [CardModel._from_dict(c) for c in cards_data]
