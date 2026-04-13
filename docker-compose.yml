@@ -1,0 +1,8 @@
+version: "3.9"
+
+services:
+  wikicards:
+    build: .
+    container_name: wikicards
+    ports:
+      - "5000:5000"
